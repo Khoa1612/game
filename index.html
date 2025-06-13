@@ -524,8 +524,7 @@
                     <button id="femaleButton" data-gender="female">Nữ</button>
                 </div>
             </div>
-            <p>Nhấn phím SPACE hoặc nhấp chuột để bơi lên.</p>
-            <p>Vuốt lên trên điện thoại để bơi.</p>
+            
             <button class="start-button" id="continueToQuizButton" disabled>Tiếp tục</button> <!-- Đổi ID và ban đầu vô hiệu hóa -->
         </div>
         
@@ -770,73 +769,7 @@
 
 
         // === Màn hình khởi đầu game (đặt tên, chọn nhân vật) ===
-        function setupStartScreen() {
-            startScreen.classList.remove('hidden');
-
-            // Reset trạng thái input
-            playerNameInput.value = "";
-            playerGender = "male"; // Reset về mặc định
-            maleButton.classList.add('selected');
-            femaleButton.classList.remove('selected');
-            isNameEntered = false;
-            isGenderSelected = true; // Mặc định male đã được chọn
-
-            // Vô hiệu hóa nút "Tiếp tục" cho đến khi cả tên và giới tính hợp lệ
-            checkStartScreenInputs();
-
-            // Event listeners để kiểm tra input
-            playerNameInput.oninput = () => {
-                isNameEntered = playerNameInput.value.trim().length > 0;
-                checkStartScreenInputs();
-            };
-
-            maleButton.onclick = () => {
-                playerGender = 'male';
-                maleButton.classList.add('selected');
-                femaleButton.classList.remove('selected');
-                isGenderSelected = true;
-                checkStartScreenInputs();
-                // Không cần drawPlayer ở đây vì màn hình này không hiển thị canvas game
-            };
-
-            femaleButton.onclick = () => {
-                playerGender = 'female';
-                femaleButton.classList.add('selected');
-                maleButton.classList.remove('selected');
-                isGenderSelected = true;
-                checkStartScreenInputs();
-                // Không cần drawPlayer ở đây vì màn hình này không hiển thị canvas game
-            };
-
-            continueToQuizButton.onclick = () => {
-                if (!isNameEntered) {
-                    alert("Vui lòng nhập tên nhân vật của bạn!");
-                    return;
-                }
-                playerName = playerNameInput.value.trim();
-
-                if (!isGenderSelected) {
-                    alert("Vui lòng chọn giới tính nhân vật!");
-                    return;
-                }
-
-                performDoorTransition(() => {
-                    startScreen.classList.add('hidden');
-                    setupQuizScreen(); // Chuyển sang màn hình Quiz
-                });
-            };
-
-            // Canvas không hiển thị trên màn hình này
-            gameCanvas.style.display = 'none';
-        }
-
-        function checkStartScreenInputs() {
-            if (isNameEntered && isGenderSelected) {
-                continueToQuizButton.disabled = false;
-            } else {
-                continueToQuizButton.disabled = true;
-            }
-        }
+        
 
         // === Màn hình Quiz ===
         function setupQuizScreen() {
@@ -1020,6 +953,74 @@
         }
 
         window.addEventListener('resize', resizeCanvas);
+
+        function setupStartScreen() {
+            startScreen.classList.remove('hidden');
+
+            // Reset trạng thái input
+            playerNameInput.value = "";
+            playerGender = "male"; // Reset về mặc định
+            maleButton.classList.add('selected');
+            femaleButton.classList.remove('selected');
+            isNameEntered = false;
+            isGenderSelected = true; // Mặc định male đã được chọn
+
+            // Vô hiệu hóa nút "Tiếp tục" cho đến khi cả tên và giới tính hợp lệ
+            checkStartScreenInputs();
+
+            // Event listeners để kiểm tra input
+            playerNameInput.oninput = () => {
+                isNameEntered = playerNameInput.value.trim().length > 0;
+                checkStartScreenInputs();
+            };
+
+            maleButton.onclick = () => {
+                playerGender = 'male';
+                maleButton.classList.add('selected');
+                femaleButton.classList.remove('selected');
+                isGenderSelected = true;
+                checkStartScreenInputs();
+                // Không cần drawPlayer ở đây vì màn hình này không hiển thị canvas game
+            };
+
+            femaleButton.onclick = () => {
+                playerGender = 'female';
+                femaleButton.classList.add('selected');
+                maleButton.classList.remove('selected');
+                isGenderSelected = true;
+                checkStartScreenInputs();
+                // Không cần drawPlayer ở đây vì màn hình này không hiển thị canvas game
+            };
+
+            continueToQuizButton.onclick = () => {
+                if (!isNameEntered) {
+                    alert("Vui lòng nhập tên nhân vật của bạn!");
+                    return;
+                }
+                playerName = playerNameInput.value.trim();
+
+                if (!isGenderSelected) {
+                    alert("Vui lòng chọn giới tính nhân vật!");
+                    return;
+                }
+
+                performDoorTransition(() => {
+                    startScreen.classList.add('hidden');
+                    setupQuizScreen(); // Chuyển sang màn hình Quiz
+                });
+            };
+
+            // Canvas không hiển thị trên màn hình này
+            gameCanvas.style.display = 'none';
+        }
+
+        function checkStartScreenInputs() {
+            if (isNameEntered && isGenderSelected) {
+                continueToQuizButton.disabled = false;
+            } else {
+                continueToQuizButton.disabled = true;
+            }
+        }
 
         function resetGameCanvasState() {
             // Đặt nhân vật cao hơn so với đáy biển để tránh va chạm ngay lập tức
