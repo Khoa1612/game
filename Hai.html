@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Diver Reverse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif; /* Font dự phòng cho văn bản UI */
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(to bottom, #2C5E7D, #4A90E2); /* Chuyển màu nước */
+            color: #333;
+        }
+
+        .game-container {
+            position: relative;
+            background-color: #4A90E2; /* Màu nền nước cho khu vực game */
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 8px solid #cbd5e0;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            width: 90vw; /* Chiều rộng thích ứng */
+            max-width: 400px; /* Chiều rộng tối đa */
+            height: 90vh; /* Chiều cao thích ứng */
+            max-height: 600px; /* Chiều cao tối đa */
+        }
+
+        canvas {
+            background-color: #4A90E2; /* Màu nền nước cho canvas */
+            display: block;
+            border-radius: 10px;
+            flex-grow: 1; /* Cho phép canvas chiếm không gian */
+            width: 100%;
+            height: auto; /* Duy trì tỷ lệ khung hình */
+            border: 2px solid #5a5a5a;
+            display: none; /* Ẩn canvas mặc định cho đến khi game bắt đầu */
+        }
+
+        .ui-panel {
+            width: 100%;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            color: #333;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+            margin-top: 10px;
+        }
+
+        /* Màn hình khởi đầu chung và màn hình game over */
+        .initial-screen, .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            text-align: center;
+            z-index: 100;
+            border-radius: 1.5rem;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .initial-screen h1, .game-over-screen h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #FFD700; /* Màu vàng kim cho tiêu đề */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .initial-screen p, .game-over-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group label {
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="password"] {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            width: 200px;
+            max-width: 80%;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+
+        .gender-selection button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #6366f1; /* Màu xanh tím */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .gender-selection button.selected {
+            background-color: #4f46e5; /* Màu xanh tím đậm hơn khi chọn */
+            border: 2px solid #FFD700;
+            transform: translateY(-2px);
+        }
+
+        .gender-selection button:hover {
+            background-color: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .start-button, .restart-button, .submit-button, .quiz-button {
+            padding: 15px 30px;
+            background-color: #4CAF50; /* Nút màu xanh lá */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .start-button:hover, .restart-button:hover, .submit-button:hover, .quiz-button:hover {
+            background-color: #45a049;
+            transform: translateY(-3px);
+        }
+
+        .start-button:active, .restart-button:active, .submit-button:active, .quiz-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .hidden {
+            display: none !important; /* Dùng !important để đảm bảo ẩn */
+        }
+
+        /* Styles for iOS-style lock screen */
+        #lockScreen {
+            background-color: #000;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #lockScreen h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 200;
+        }
+        #passcodeDots {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .dot {
+            width: 15px;
+            height: 15px;
+            border: 2px solid white;
+            border-radius: 50%;
+            background-color: transparent;
+            transition: background-color 0.2s ease;
+        }
+        .dot.filled {
+            background-color: white;
+        }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 280px;
+            max-width: 80%;
+        }
+        .keypad button {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 300;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .keypad button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .keypad button:active {
+            transform: scale(0.95);
+        }
+        .keypad .empty-cell {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            cursor: default;
+        }
+        #lockMessage {
+            color: #EF4444;
+            font-size: 1rem;
+            margin-top: 10px;
+            text-shadow: none;
+        }
+
+        /* Quiz screen */
+        #quizScreen {
+            background-color: rgba(0, 0, 100, 0.8); /* Darker blue overlay for quiz */
+        }
+        #quizScreen .question {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            max-width: 90%;
+        }
+        #quizScreen .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 300px;
+        }
+        #quizScreen .options button {
+            background-color: #6366f1;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        #quizScreen .options button:hover {
+            background-color: #4f46e5;
+        }
+        #quizResult {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #FFD700;
+        }
+
+        /* Essay screen */
+        #essayScreen textarea {
+            width: 90%;
+            max-width: 300px;
+            height: 100px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            resize: vertical;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        #wordCount {
+            font-size: 0.9rem;
+            margin-top: 5px;
+            color: #bbb;
+        }
+        #essayMessage {
+            color: #EF4444;
+            font-size: 1rem;
+            margin-top: 5px;
+            text-shadow: none;
+        }
+
+        /* Ready to Play Screen */
+        #readyToPlayScreen {
+            background-color: rgba(0, 128, 0, 0.8); /* Greenish overlay */
+        }
+        #readyToPlayScreen h2 {
+            color: #A7D3EE; /* Light blue for confirmation */
+        }
+        #readyToPlayScreen p {
+            font-size: 1.2rem;
+            margin-top: 15px;
+        }
+        #readyToPlayScreen .confirmation-details {
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        /* Transition effect */
+        .door-transition {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            z-index: 200; /* Above all screens */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none; /* Allows clicks to pass through when not active */
+            transition: opacity 0.5s ease-out;
+        }
+        .door-transition.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .door-transition .door-left,
+        .door-transition .door-right {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background-color: #4a4a4a; /* Màu cửa */
+            transition: transform 1s ease-in-out;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .door-transition .door-left {
+            left: 0;
+            transform: translateX(0%);
+            transform-origin: left center;
+        }
+        .door-transition .door-right {
+            right: 0;
+            transform: translateX(0%);
+            transform-origin: right center;
+        }
+        .door-transition.open .door-left {
+            transform: translateX(-100%);
+        }
+        .door-transition.open .door-right {
+            transform: translateX(100%);
+        }
+        .door-transition .center-light {
+            position: absolute;
+            width: 0px;
+            height: 0px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,100,0.8) 0%, transparent 70%);
+            opacity: 0;
+            transition: width 1s ease-in-out, height 1s ease-in-out, opacity 0.5s ease-in-out 0.5s; /* Light appears after doors start opening */
+        }
+        .door-transition.open .center-light {
+            width: 600px;
+            height: 600px;
+            opacity: 1;
+        }
+
+
+        /* Điều chỉnh cho di động */
+        @media (max-width: 768px) {
+            .game-container {
+                width: 95vw;
+                height: 95vh;
+                padding: 10px;
+            }
+            .initial-screen h1, .game-over-screen h2 {
+                font-size: 2rem;
+            }
+            .initial-screen p, .game-over-screen p {
+                font-size: 1rem;
+            }
+            .gender-selection button {
+                padding: 8px 15px;
+                font-size: 1rem;
+            }
+            .start-button, .restart-button, .submit-button, .quiz-button {
+                font-size: 1.2rem;
+                padding: 10px 20px;
+            }
+            .keypad button {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            .keypad {
+                width: 240px;
+            }
+            #lockScreen h1 {
+                font-size: 2rem;
+            }
+            #lockScreen .dot {
+                width: 12px;
+                height: 12px;
+            }
+            #quizScreen .question {
+                font-size: 1rem;
+            }
+            #quizScreen .options button {
+                font-size: 0.9rem;
+                padding: 8px 10px;
+            }
+            #essayScreen textarea {
+                height: 80px;
+            }
+            #readyToPlayScreen h2 {
+                font-size: 2rem;
+            }
+            #readyToPlayScreen p {
+                font-size: 1rem;
+            }
+            #readyToPlayScreen .confirmation-details {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Màn hình khóa -->
+        <div class="initial-screen" id="lockScreen">
+            <h1>Màn hình khóa</h1>
+            <p>Nhập mật khẩu:</p>
+            <div id="passcodeDots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+            <div class="keypad">
+                <button data-key="1">1</button>
+                <button data-key="2">2</button>
+                <button data-key="3">3</button>
+                <button data-key="4">4</button>
+                <button data-key="5">5</button>
+                <button data-key="6">6</button>
+                <button data-key="7">7</button>
+                <button data-key="8">8</button>
+                <button data-key="9">9</button>
+                <button class="empty-cell"></button>
+                <button data-key="0">0</button>
+                <button data-key="clear">X</button>
+            </div>
+            <p id="lockMessage"></p>
+        </div>
+
+
+        <!-- Màn hình Quiz -->
+        <div class="initial-screen hidden" id="quizScreen">
+            <h2>Câu hỏi về Duy Khoa</h2>
+            <p class="question" id="quizQuestion"></p>
+            <div class="options" id="quizOptions">
+                <!-- Các nút trả lời sẽ được thêm bằng JS -->
+            </div>
+            <p id="quizResult"></p>
+            <button class="quiz-button hidden" id="nextQuestionButton">Tiếp theo</button>
+        </div>
+
+        <!-- Màn hình viết đoạn văn -->
+        <div class="initial-screen hidden" id="essayScreen">
+            <h2>Cảm nghĩ về Duy Khoa</h2>
+            <p>Hãy viết một đoạn văn ngắn (khoảng 50 chữ) về cảm nghĩ của bạn về Duy Khoa:</p>
+            <textarea id="essayInput" rows="5" placeholder="Viết cảm nghĩ của bạn tại đây..."></textarea>
+            <p id="wordCount">Số chữ: 0</p>
+            <p id="essayMessage"></p>
+            <button class="submit-button" id="submitEssayButton" disabled>Gửi</button> <!-- Ban đầu vô hiệu hóa -->
+        </div>
+
+        <!-- Màn hình Sẵn sàng chơi! -->
+        <div class="initial-screen hidden" id="readyToPlayScreen">
+            <h2>Bạn đã sẵn sàng!</h2>
+            <p>Tên nhân vật: <span id="readyPlayerName"></span></p>
+            <p>Giới tính: <span id="readyPlayerGender"></span></p>
+            <p class="confirmation-details">Bạn đã hoàn thành tất cả các thử thách!</p>
+            <button class="start-button" id="finalStartGameButton">BẮT ĐẦU CHƠI</button>
+        </div>
+
+        <!-- Màn hình khởi đầu game (sau khi mở khóa) -->
+        <div class="initial-screen hidden" id="startScreen">
+            <h1>Flappy Diver Reverse</h1>
+            <div class="input-group">
+                <label for="playerNameInput">Tên nhân vật của bạn:</label>
+                <input type="text" id="playerNameInput" maxlength="10" placeholder="Nhập tên...">
+            </div>
+            <div class="input-group">
+                <label>Chọn nhân vật:</label>
+                <div class="gender-selection">
+                    <button id="maleButton" data-gender="male">Nam</button>
+                    <button id="femaleButton" data-gender="female">Nữ</button>
+                </div>
+            </div>
+            <p>Nhấn phím SPACE hoặc nhấp chuột để bơi lên.</p>
+            <p>Vuốt lên trên điện thoại để bơi.</p>
+            <button class="start-button" id="continueToQuizButton" disabled>Tiếp tục</button> <!-- Đổi ID và ban đầu vô hiệu hóa -->
+        </div>
+        
+        <!-- Màn hình game over -->
+        <div class="initial-screen hidden" id="gameOverScreen">
+            <h2>Trò chơi kết thúc!</h2>
+            <p>Điểm của bạn: <span id="finalScore">0</span></p>
+            <p>Điểm cao nhất: <span id="finalHighScore">0</span></p>
+            <button class="restart-button" id="restartButton">Chơi lại</button>
+        </div>
+
+        <!-- Hiệu ứng chuyển cảnh kiểu cửa -->
+        <div class="door-transition" id="doorTransition">
+            <div class="door-left"></div>
+            <div class="door-right"></div>
+            <div class="center-light"></div>
+        </div>
+    </div>
+
+    <script>
+        // Lấy các phần tử DOM
+        const gameCanvas = document.getElementById('gameCanvas');
+        const ctx = gameCanvas.getContext('2d');
+
+        // Màn hình khóa
+        const lockScreen = document.getElementById('lockScreen');
+        const passcodeDots = document.getElementById('passcodeDots').children;
+        const keypadButtons = document.querySelectorAll('.keypad button');
+        const lockMessage = document.getElementById('lockMessage');
+        let currentPasscode = "";
+        const CORRECT_PASSCODE = "1612";
+        const MAX_FAILED_ATTEMPTS = 3;
+        const LOCKOUT_DURATION = 24 * 60 * 60 * 1000; // 24 giờ tính bằng milliseconds
+
+        // Màn hình Quiz
+        const quizScreen = document.getElementById('quizScreen');
+        const quizQuestion = document.getElementById('quizQuestion');
+        const quizOptions = document.getElementById('quizOptions');
+        const quizResult = document.getElementById('quizResult');
+        const nextQuestionButton = document.getElementById('nextQuestionButton');
+        let currentQuizIndex = 0;
+        let correctAnswersCount = 0;
+        const quizQuestions = [
+            {
+                question: "Duy Khoa thích màu nào nhất?",
+                options: ["Xanh dương", "Đỏ", "Vàng", "Xanh lá"],
+                answer: "Xanh dương"
+            },
+            {
+                question: "Món ăn yêu thích của Duy Khoa là gì?",
+                options: ["Phở", "Bánh mì", "Cơm tấm", "Hải sản"],
+                answer: "Hải sản"
+            },
+            {
+                question: "Sở thích cuối tuần của Duy Khoa là gì?",
+                options: ["Chơi game", "Đọc sách", "Đi du lịch", "Ngủ"],
+                answer: "Đi du lịch"
+            },
+            {
+                question: "Con vật yêu thích của Duy Khoa?",
+                options: ["Chó", "Mèo", "Cá", "Chim"],
+                answer: "Cá"
+            },
+            {
+                question: "Duy Khoa sinh vào mùa nào?",
+                options: ["Xuân", "Hạ", "Thu", "Đông"],
+                answer: "Đông"
+            }
+        ];
+
+        // Màn hình viết đoạn văn
+        const essayScreen = document.getElementById('essayScreen');
+        const essayInput = document.getElementById('essayInput');
+        const wordCountDisplay = document.getElementById('wordCount');
+        const essayMessage = document.getElementById('essayMessage');
+        const submitEssayButton = document.getElementById('submitEssayButton');
+        const MIN_WORD_COUNT = 50; // Đã thay đổi thành 50
+        const MAX_WORD_COUNT = 9999; // Đã nới rộng giới hạn trên rất nhiều
+
+        // Màn hình Sẵn sàng chơi!
+        const readyToPlayScreen = document.getElementById('readyToPlayScreen');
+        const readyPlayerName = document.getElementById('readyPlayerName');
+        const readyPlayerGender = document.getElementById('readyPlayerGender');
+        const finalStartGameButton = document.getElementById('finalStartGameButton');
+
+        // Màn hình khởi đầu game (đặt tên, chọn nhân vật)
+        const startScreen = document.getElementById('startScreen');
+        const continueToQuizButton = document.getElementById('continueToQuizButton');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const maleButton = document.getElementById('maleButton');
+        const femaleButton = document.getElementById('femaleButton');
+        let isNameEntered = false;
+        let isGenderSelected = false;
+        
+        // Màn hình game over
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const finalHighScoreDisplay = document.getElementById('finalHighScore');
+        const restartButton = document.getElementById('restartButton');
+
+        // Hiệu ứng chuyển cảnh
+        const doorTransition = document.getElementById('doorTransition');
+        const doorLeft = document.querySelector('.door-left');
+        const doorRight = document.querySelector('.door-right');
+        const centerLight = document.querySelector('.center-light');
+
+        // Các biến game
+        let gameStarted = false;
+        let gameOver = false;
+        let score = 0;
+        let highScore = localStorage.getItem('flappyDiverHighScore') || 0;
+        let playerName = "Người chơi";
+        let playerGender = "male";
+
+        // Cài đặt game
+        const CANVAS_WIDTH = 320;
+        const CANVAS_HEIGHT = 480;
+        const PLAYER_WIDTH = 25;
+        const PLAYER_HEIGHT = 35;
+        const OBSTACLE_WIDTH = 60;
+        const OBSTACLE_GAP = 130;
+        const OBSTACLE_SPEED = 2;
+        const GRAVITY = 0.5;
+        const JUMP_VELOCITY = -8;
+
+        let playerX, playerY;
+        let playerVelocityY;
+        let obstacles = [];
+        let obstacleSpawnInterval = 1500;
+        let lastObstacleTime = 0;
+        let animationFrameId;
+
+        // === Hàm chuyển cảnh ===
+        function performDoorTransition(callback) {
+            doorTransition.classList.remove('hidden');
+            doorTransition.classList.remove('open');
+            centerLight.style.width = '0px';
+            centerLight.style.height = '0px';
+            centerLight.style.opacity = '0';
+            doorTransition.classList.add('active'); // Kích hoạt overlay để chặn tương tác
+
+            // Đảm bảo transition đã reset trước khi mở cửa
+            setTimeout(() => {
+                doorTransition.classList.add('open');
+                // Gọi callback sau khi cửa mở hoàn toàn và hiệu ứng sáng hoàn tất
+                setTimeout(() => {
+                    if (callback) {
+                        callback();
+                    }
+                    setTimeout(() => {
+                        doorTransition.classList.remove('active'); // Tắt overlay
+                        doorTransition.classList.add('hidden'); // Ẩn hoàn toàn overlay
+                    }, 500); // Đợi thêm một chút sau khi cửa mở
+                }, 1000); // Thời gian mở cửa (tương ứng với transition trong CSS)
+            }, 50); // Thời gian chờ nhỏ để CSS reset
+        }
+
+        // === Màn hình khóa iOS ===
+        function setupLockScreen() {
+            lockScreen.classList.remove('hidden');
+            startScreen.classList.add('hidden');
+            quizScreen.classList.add('hidden');
+            essayScreen.classList.add('hidden');
+            readyToPlayScreen.classList.add('hidden'); // Ẩn màn hình sẵn sàng chơi
+            gameOverScreen.classList.add('hidden');
+            gameCanvas.style.display = 'none';
+
+            currentPasscode = "";
+            updatePasscodeDots();
+            lockMessage.textContent = "";
+
+            const failedAttempts = parseInt(localStorage.getItem('failedPasscodeAttempts') || '0');
+            const lastFailedTime = parseInt(localStorage.getItem('lastFailedPasscodeTime') || '0');
+            const currentTime = Date.now();
+
+            if (failedAttempts >= MAX_FAILED_ATTEMPTS && (currentTime - lastFailedTime < LOCKOUT_DURATION)) {
+                const remainingTime = LOCKOUT_DURATION - (currentTime - lastFailedTime);
+                const hours = Math.ceil(remainingTime / (1000 * 60 * 60));
+                lockMessage.textContent = `Bạn đã nhập sai quá 3 lần. Vui lòng thử lại sau ${hours} giờ.`;
+                keypadButtons.forEach(button => button.disabled = true);
+                return;
+            } else {
+                // Reset failed attempts if lockout period has passed or not locked out
+                localStorage.setItem('failedPasscodeAttempts', '0');
+                localStorage.removeItem('lastFailedPasscodeTime');
+                keypadButtons.forEach(button => button.disabled = false); // Re-enable keypad
+            }
+
+
+            keypadButtons.forEach(button => {
+                button.onclick = () => {
+                    const key = button.dataset.key;
+                    if (key === "clear") {
+                        currentPasscode = "";
+                        lockMessage.textContent = "";
+                    } else if (key) {
+                        if (currentPasscode.length < 4) {
+                            currentPasscode += key;
+                        }
+                    }
+                    updatePasscodeDots();
+                    if (currentPasscode.length === 4) {
+                        if (currentPasscode === CORRECT_PASSCODE) {
+                            localStorage.setItem('failedPasscodeAttempts', '0'); // Reset attempts on success
+                            localStorage.removeItem('lastFailedPasscodeTime');
+                            performDoorTransition(() => {
+                                lockScreen.classList.add('hidden');
+                                setupStartScreen(); // Chuyển sang màn hình khởi đầu game
+                            });
+                        } else {
+                            // Mật khẩu sai
+                            let currentAttempts = parseInt(localStorage.getItem('failedPasscodeAttempts') || '0');
+                            currentAttempts++;
+                            localStorage.setItem('failedPasscodeAttempts', currentAttempts.toString());
+                            localStorage.setItem('lastFailedPasscodeTime', Date.now().toString());
+
+                            if (currentAttempts >= MAX_FAILED_ATTEMPTS) {
+                                lockMessage.textContent = `Bạn đã nhập sai mật khẩu ${MAX_FAILED_ATTEMPTS} lần. Vui lòng thử lại sau 24 giờ.`;
+                                keypadButtons.forEach(button => button.disabled = true);
+                            } else {
+                                lockMessage.textContent = `Mật khẩu sai! Còn ${MAX_FAILED_ATTEMPTS - currentAttempts} lần thử.`;
+                            }
+                            setTimeout(() => {
+                                currentPasscode = "";
+                                updatePasscodeDots();
+                            }, 500); // Reset dots after a brief delay
+                        }
+                    }
+                };
+            });
+        }
+
+        function updatePasscodeDots() {
+            for (let i = 0; i < 4; i++) {
+                if (i < currentPasscode.length) {
+                    passcodeDots[i].classList.add('filled');
+                } else {
+                    passcodeDots[i].classList.remove('filled');
+                }
+            }
+        }
+
+
+        // === Màn hình khởi đầu game (đặt tên, chọn nhân vật) ===
+        function setupStartScreen() {
+            startScreen.classList.remove('hidden');
+
+            // Reset trạng thái input
+            playerNameInput.value = "";
+            playerGender = "male"; // Reset về mặc định
+            maleButton.classList.add('selected');
+            femaleButton.classList.remove('selected');
+            isNameEntered = false;
+            isGenderSelected = true; // Mặc định male đã được chọn
+
+            // Vô hiệu hóa nút "Tiếp tục" cho đến khi cả tên và giới tính hợp lệ
+            checkStartScreenInputs();
+
+            // Event listeners để kiểm tra input
+            playerNameInput.oninput = () => {
+                isNameEntered = playerNameInput.value.trim().length > 0;
+                checkStartScreenInputs();
+            };
+
+            maleButton.onclick = () => {
+                playerGender = 'male';
+                maleButton.classList.add('selected');
+                femaleButton.classList.remove('selected');
+                isGenderSelected = true;
+                checkStartScreenInputs();
+                // Không cần drawPlayer ở đây vì màn hình này không hiển thị canvas game
+            };
+
+            femaleButton.onclick = () => {
+                playerGender = 'female';
+                femaleButton.classList.add('selected');
+                maleButton.classList.remove('selected');
+                isGenderSelected = true;
+                checkStartScreenInputs();
+                // Không cần drawPlayer ở đây vì màn hình này không hiển thị canvas game
+            };
+
+            continueToQuizButton.onclick = () => {
+                if (!isNameEntered) {
+                    alert("Vui lòng nhập tên nhân vật của bạn!");
+                    return;
+                }
+                playerName = playerNameInput.value.trim();
+
+                if (!isGenderSelected) {
+                    alert("Vui lòng chọn giới tính nhân vật!");
+                    return;
+                }
+
+                performDoorTransition(() => {
+                    startScreen.classList.add('hidden');
+                    setupQuizScreen(); // Chuyển sang màn hình Quiz
+                });
+            };
+
+            // Canvas không hiển thị trên màn hình này
+            gameCanvas.style.display = 'none';
+        }
+
+        function checkStartScreenInputs() {
+            if (isNameEntered && isGenderSelected) {
+                continueToQuizButton.disabled = false;
+            } else {
+                continueToQuizButton.disabled = true;
+            }
+        }
+
+        // === Màn hình Quiz ===
+        function setupQuizScreen() {
+            quizScreen.classList.remove('hidden');
+            currentQuizIndex = 0;
+            correctAnswersCount = 0;
+            nextQuestionButton.classList.add('hidden');
+            loadQuizQuestion();
+            gameCanvas.style.display = 'none'; // Đảm bảo canvas vẫn ẩn
+        }
+
+        function loadQuizQuestion() {
+            if (currentQuizIndex >= quizQuestions.length) {
+                // Kết thúc Quiz
+                displayQuizResult();
+                return;
+            }
+
+            quizResult.textContent = ""; // Xóa thông báo kết quả
+            nextQuestionButton.classList.add('hidden'); // Ẩn nút "Tiếp theo"
+
+            const q = quizQuestions[currentQuizIndex];
+            quizQuestion.textContent = `${currentQuizIndex + 1}. ${q.question}`;
+            quizOptions.innerHTML = ""; // Xóa các lựa chọn cũ
+
+            q.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('quiz-option');
+                button.onclick = () => checkQuizAnswer(option, q.answer);
+                quizOptions.appendChild(button);
+            });
+        }
+
+        function checkQuizAnswer(selectedOption, correctAnswer) {
+            // Vô hiệu hóa tất cả các nút tùy chọn sau khi chọn
+            document.querySelectorAll('.quiz-option').forEach(button => {
+                button.disabled = true;
+                if (button.textContent === correctAnswer) {
+                    button.style.backgroundColor = '#4CAF50'; // Màu xanh lá cho đáp án đúng
+                } else if (button.textContent === selectedOption) {
+                    button.style.backgroundColor = '#EF4444'; // Màu đỏ cho đáp án sai
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                correctAnswersCount++;
+                quizResult.textContent = "Chính xác!";
+                quizResult.style.color = '#8BC34A';
+            } else {
+                quizResult.textContent = `Sai! Đáp án đúng là: ${correctAnswer}`;
+                quizResult.style.color = '#EF4444';
+            }
+            nextQuestionButton.classList.remove('hidden');
+        }
+
+        nextQuestionButton.onclick = () => {
+            currentQuizIndex++;
+            loadQuizQuestion();
+        };
+
+        function displayQuizResult() {
+            let message = "";
+            let passQuiz = false;
+            if (correctAnswersCount >= 4) { // Yêu cầu 4/5 câu đúng
+                message = `Bạn đã trả lời đúng ${correctAnswersCount}/5 câu. Tuyệt vời! Bạn đã vượt qua bài kiểm tra.`;
+                quizResult.style.color = '#4CAF50';
+                passQuiz = true;
+            } else {
+                message = `Bạn đã trả lời đúng ${correctAnswersCount}/5 câu. Rất tiếc, bạn cần đúng ít nhất 4 câu để tiếp tục.`;
+                quizResult.style.color = '#EF4444';
+                passQuiz = false;
+            }
+            quizQuestion.textContent = ""; // Xóa câu hỏi
+            quizOptions.innerHTML = ""; // Xóa lựa chọn
+            quizResult.textContent = message;
+            nextQuestionButton.classList.add('hidden');
+
+            // Nút để tiếp tục hoặc chơi lại quiz
+            const continueButton = document.createElement('button');
+            continueButton.classList.add('quiz-button');
+            if (passQuiz) {
+                continueButton.textContent = "Tiếp tục";
+                continueButton.onclick = () => {
+                    performDoorTransition(() => {
+                        quizScreen.classList.add('hidden');
+                        setupEssayScreen(); // Chuyển sang màn hình viết đoạn văn
+                    });
+                };
+            } else {
+                continueButton.textContent = "Thử lại Quiz";
+                continueButton.onclick = () => {
+                    setupQuizScreen(); // Thử lại Quiz
+                };
+            }
+            quizOptions.appendChild(continueButton); // Thêm vào phần options
+        }
+
+        // === Màn hình viết đoạn văn ===
+        function setupEssayScreen() {
+            essayScreen.classList.remove('hidden');
+            essayInput.value = "";
+            wordCountDisplay.textContent = "Số chữ: 0";
+            essayMessage.textContent = ""; // Xóa thông báo lỗi cũ
+            submitEssayButton.disabled = true; // Vô hiệu hóa nút gửi ban đầu
+            gameCanvas.style.display = 'none'; // Đảm bảo canvas vẫn ẩn
+        }
+
+        essayInput.oninput = () => {
+            const text = essayInput.value.trim();
+            const words = text.split(/\s+/).filter(word => word.length > 0);
+            const wordCount = words.length;
+            wordCountDisplay.textContent = `Số chữ: ${wordCount}`;
+            essayMessage.textContent = ""; // Xóa thông báo khi người dùng đang nhập
+
+            if (wordCount >= MIN_WORD_COUNT && wordCount <= MAX_WORD_COUNT) {
+                submitEssayButton.disabled = false;
+                wordCountDisplay.style.color = '#4CAF50';
+            } else {
+                submitEssayButton.disabled = true;
+                wordCountDisplay.style.color = '#EF4444';
+            }
+        };
+
+        submitEssayButton.onclick = () => {
+            const text = essayInput.value.trim();
+            const words = text.split(/\s+/).filter(word => word.length > 0);
+            const wordCount = words.length;
+
+            if (wordCount >= MIN_WORD_COUNT && wordCount <= MAX_WORD_COUNT) {
+                performDoorTransition(() => {
+                    essayScreen.classList.add('hidden');
+                    setupReadyToPlayScreen(); // Chuyển sang màn hình Sẵn sàng chơi!
+                });
+            } else {
+                // Đã cập nhật thông báo lỗi để rõ ràng hơn
+                essayMessage.textContent = `Duy Khoa thân mến, đoạn văn phải có ít nhất ${MIN_WORD_COUNT} chữ. Bạn đang có ${wordCount} chữ.`;
+                essayMessage.style.color = '#EF4444';
+            }
+        };
+
+        // === Màn hình Sẵn sàng chơi! ===
+        function setupReadyToPlayScreen() {
+            readyToPlayScreen.classList.remove('hidden');
+            readyPlayerName.textContent = playerName;
+            readyPlayerGender.textContent = playerGender === 'male' ? 'Nam' : 'Nữ';
+            gameCanvas.style.display = 'none'; // Đảm bảo canvas vẫn ẩn
+
+            finalStartGameButton.onclick = () => {
+                performDoorTransition(() => {
+                    readyToPlayScreen.classList.add('hidden');
+                    startGame(); // Cuối cùng, bắt đầu game chính
+                });
+            };
+        }
+
+
+        // === Cài đặt Canvas và Game logic ===
+        // Điều chỉnh kích thước canvas
+        function resizeCanvas() {
+            gameCanvas.width = CANVAS_WIDTH;
+            gameCanvas.height = CANVAS_HEIGHT;
+
+            const container = document.querySelector('.game-container');
+            const containerWidth = container.clientWidth - (20 * 2);
+            const containerHeight = container.clientHeight - (20 * 2);
+
+            const aspectRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
+            let displayWidth = containerWidth;
+            let displayHeight = containerWidth / aspectRatio;
+
+            if (displayHeight > containerHeight) {
+                displayHeight = containerHeight;
+                displayWidth = containerHeight * aspectRatio;
+            }
+
+            gameCanvas.style.width = `${displayWidth}px`;
+            gameCanvas.style.height = `${displayHeight}px`;
+
+            container.style.backgroundColor = '#4A90E2';
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function resetGameCanvasState() {
+            // Đặt nhân vật cao hơn so với đáy biển để tránh va chạm ngay lập tức
+            playerX = CANVAS_WIDTH - 80 - PLAYER_WIDTH;
+            playerY = CANVAS_HEIGHT / 3; // <-- Đã thay đổi vị trí Y ban đầu
+            playerVelocityY = 0;
+            obstacles = [];
+            score = 0;
+            gameOver = false;
+            lastObstacleTime = performance.now();
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT); // Clear canvas
+        }
+
+        // Vẽ phong cảnh dưới nước
+        function drawBackground() {
+            ctx.fillStyle = '#DED895'; // Màu cát
+            ctx.fillRect(0, CANVAS_HEIGHT - 40, CANVAS_WIDTH, 40);
+            ctx.strokeStyle = '#C4BC87'; // Màu cát đậm hơn cho viền
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, CANVAS_HEIGHT - 40, CANVAS_WIDTH, 40);
+
+            // Các hạt bong bóng
+            for (let i = 0; i < 20; i++) {
+                const bubbleX = Math.random() * CANVAS_WIDTH;
+                const bubbleY = Math.random() * CANVAS_HEIGHT;
+                const bubbleRadius = Math.random() * 3 + 1;
+                ctx.beginPath();
+                ctx.arc(bubbleX, bubbleY, bubbleRadius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`;
+                ctx.fill();
+            }
+        }
+
+        // Vẽ nhân vật người
+        function drawPlayer() {
+            const skinColor = playerGender === 'male' ? '#DEA17B' : '#E6A7A7';
+            const swimsuitColor = playerGender === 'male' ? '#007ACC' : '#FF69B4';
+            const hairColor = playerGender === 'male' ? '#4A2A1A' : '#A0522D';
+
+            const headRadius = PLAYER_HEIGHT * 0.25;
+            const bodyWidth = PLAYER_WIDTH * 0.8;
+            const bodyHeight = PLAYER_HEIGHT * 0.6;
+
+            // Save canvas state before potential transform
+            ctx.save();
+            ctx.translate(playerX + PLAYER_WIDTH / 2, playerY + PLAYER_HEIGHT / 2);
+            ctx.scale(-1, 1); // Flip horizontally for "reverse" look
+
+            // Draw relative to new origin (0,0) which is now the center of the player
+            const relativeX = -PLAYER_WIDTH / 2;
+            const relativeY = -PLAYER_HEIGHT / 2;
+
+            // Body
+            ctx.fillStyle = skinColor;
+            ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2, relativeY + headRadius * 0.8, bodyWidth, bodyHeight);
+
+            // Swimsuit
+            ctx.fillStyle = swimsuitColor;
+            if (playerGender === 'male') {
+                ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2, relativeY + headRadius * 0.8 + bodyHeight * 0.6, bodyWidth, bodyHeight * 0.4);
+            } else {
+                ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2, relativeY + headRadius * 0.8 + bodyHeight * 0.5, bodyWidth, bodyHeight * 0.5);
+                ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2, relativeY + headRadius * 0.8, bodyWidth, bodyHeight * 0.15);
+            }
+
+            // Head
+            ctx.beginPath();
+            ctx.arc(relativeX + PLAYER_WIDTH / 2, relativeY + headRadius, headRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hair
+            ctx.fillStyle = hairColor;
+            if (playerGender === 'male') {
+                ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 + 2, relativeY + headRadius * 0.2, bodyWidth - 4, headRadius * 0.6);
+            } else {
+                ctx.beginPath();
+                ctx.arc(relativeX + PLAYER_WIDTH / 2, relativeY + headRadius, headRadius * 1.1, 0, Math.PI, false);
+                ctx.fill();
+            }
+
+            // Legs
+            ctx.fillStyle = skinColor;
+            ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 + (bodyWidth * 0.2), relativeY + PLAYER_HEIGHT - 8, 4, 8);
+            ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 + (bodyWidth * 0.8) - 4, relativeY + PLAYER_HEIGHT - 8, 4, 8);
+
+            // Arms
+            ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 - 3, relativeY + headRadius * 0.8 + bodyHeight * 0.2, 5, bodyHeight * 0.5);
+            ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 + bodyWidth - 2, relativeY + headRadius * 0.8 + bodyHeight * 0.2, 5, bodyHeight * 0.5);
+
+            // Eye
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(relativeX + PLAYER_WIDTH / 2 + 4, relativeY + headRadius * 0.8, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Restore canvas state
+            ctx.restore();
+        }
+
+        // Tạo chướng ngại vật (rong biển/san hô)
+        function createObstacle() {
+            const minHeight = 60;
+            const maxHeight = CANVAS_HEIGHT - OBSTACLE_GAP - 60 - 40;
+            const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+            const bottomHeight = CANVAS_HEIGHT - topHeight - OBSTACLE_GAP - 40;
+
+            obstacles.push({
+                x: -OBSTACLE_WIDTH, // Chướng ngại vật xuất hiện từ bên trái
+                top: topHeight,
+                bottom: bottomHeight,
+                passed: false
+            });
+        }
+
+        // Vẽ chướng ngại vật (rong biển/san hô)
+        function drawObstacles() {
+            ctx.fillStyle = '#2E8B57';
+            ctx.strokeStyle = '#1E5939';
+            ctx.lineWidth = 2;
+
+            obstacles.forEach(obstacle => {
+                ctx.beginPath();
+                ctx.moveTo(obstacle.x, 0);
+                ctx.lineTo(obstacle.x + OBSTACLE_WIDTH, 0);
+                ctx.lineTo(obstacle.x + OBSTACLE_WIDTH, obstacle.top);
+                ctx.lineTo(obstacle.x, obstacle.top);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(obstacle.x, CANVAS_HEIGHT - obstacle.bottom - 40);
+                ctx.lineTo(obstacle.x + OBSTACLE_WIDTH, CANVAS_HEIGHT - obstacle.bottom - 40);
+                ctx.lineTo(obstacle.x + OBSTACLE_WIDTH, CANVAS_HEIGHT - 40);
+                ctx.lineTo(obstacle.x, CANVAS_HEIGHT - 40);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#3CB371';
+                if (Math.random() > 0.5) {
+                    ctx.beginPath();
+                    ctx.arc(obstacle.x + OBSTACLE_WIDTH / 2, obstacle.top - 10, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(obstacle.x + OBULDER_WIDTH / 2, CANVAS_HEIGHT - obstacle.bottom - 30, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        // Vẽ điểm số lên canvas
+        function drawScore() {
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 3;
+            ctx.font = 'bold 48px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            const scoreText = score.toString();
+            const textX = CANVAS_WIDTH / 2;
+            const textY = 50;
+
+            ctx.strokeText(scoreText, textX, textY);
+            ctx.fillText(scoreText, textX, textY);
+        }
+
+        // Vẽ tên nhân vật lên canvas
+        function drawPlayerName() {
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.font = 'bold 16px "Inter"';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+
+            ctx.strokeText(playerName, 10, 10);
+            ctx.fillText(playerName, 10, 10);
+        }
+
+        // Vòng lặp cập nhật game chính
+        function update(currentTime) {
+            if (gameOver || !gameStarted) return;
+
+            playerVelocityY += GRAVITY;
+            playerY += playerVelocityY;
+
+            if (playerY + PLAYER_HEIGHT >= CANVAS_HEIGHT - 40) {
+                playerY = CANVAS_HEIGHT - PLAYER_HEIGHT - 40;
+                endGame();
+                return;
+            }
+
+            if (playerY < 0) {
+                playerY = 0;
+                playerVelocityY = 0;
+            }
+
+            if (currentTime - lastObstacleTime > obstacleSpawnInterval) {
+                createObstacle();
+                lastObstacleTime = currentTime;
+            }
+
+            obstacles.forEach(obstacle => {
+                obstacle.x += OBSTACLE_SPEED;
+
+                if (
+                    playerX < obstacle.x + OBSTACLE_WIDTH &&
+                    playerX + PLAYER_WIDTH > obstacle.x &&
+                    (playerY < obstacle.top || playerY + PLAYER_HEIGHT > CANVAS_HEIGHT - obstacle.bottom - 40)
+                ) {
+                    endGame();
+                    return;
+                }
+
+                if (obstacle.x + OBSTACLE_WIDTH > playerX && !obstacle.passed) {
+                    if (obstacle.x > playerX + PLAYER_WIDTH) {
+                        score++;
+                        obstacle.passed = true;
+                    }
+                }
+            });
+
+            obstacles = obstacles.filter(obstacle => obstacle.x < CANVAS_WIDTH);
+
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            drawBackground();
+            drawObstacles();
+            drawPlayer();
+            drawScore();
+            drawPlayerName();
+
+            animationFrameId = requestAnimationFrame(update);
+        }
+
+        // Kết thúc trò chơi
+        function endGame() {
+            gameOver = true;
+            cancelAnimationFrame(animationFrameId);
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('flappyDiverHighScore', highScore);
+            }
+
+            finalScoreDisplay.textContent = score;
+            finalHighScoreDisplay.textContent = highScore;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        // Bắt đầu game chính
+        function startGame() {
+            gameCanvas.style.display = 'block'; // Hiển thị canvas
+            resetGameCanvasState(); // Đảm bảo reset trạng thái game trước khi bắt đầu
+            gameStarted = true;
+            animationFrameId = requestAnimationFrame(update);
+        }
+
+        function playerSwimUp() {
+            if (!gameStarted || gameOver) return;
+            playerVelocityY = JUMP_VELOCITY;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                playerSwimUp();
+            }
+        });
+
+        gameCanvas.addEventListener('click', () => {
+            playerSwimUp();
+        });
+
+        let touchStartY = 0;
+        gameCanvas.addEventListener('touchstart', (e) => {
+            if (!gameStarted) return;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        gameCanvas.addEventListener('touchend', (e) => {
+            if (!gameStarted) return;
+            const touchEndY = e.changedTouches[0].clientY;
+            const dy = touchEndY - touchStartY;
+
+            if (dy < -20) {
+                playerSwimUp();
+            }
+        });
+
+        // Nút chơi lại
+        restartButton.addEventListener('click', () => {
+            gameOverScreen.classList.add('hidden');
+            setupLockScreen(); // Quay lại màn hình khóa
+        });
+
+        // --- Khởi tạo game ban đầu ---
+        // Bắt đầu từ màn hình khóa khi tải trang
+        document.addEventListener('DOMContentLoaded', () => {
+            resizeCanvas(); // Đảm bảo canvas có kích thước đúng
+            setupLockScreen();
+        });
+    </script>
+</body>
+</html>
