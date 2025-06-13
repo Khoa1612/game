@@ -533,7 +533,7 @@
 
         <!-- Màn hình khóa -->
         <div class="initial-screen" id="lockScreen">
-            <h1>Màn hình khóa</h1>
+            <h1>Mã khóa Duy Khoa (gợi ý: có 4 số)</h1>
             <p>Nhập mật khẩu:</p>
             <div id="passcodeDots">
                 <div class="dot"></div>
@@ -561,7 +561,7 @@
 
         <!-- Màn hình Quiz -->
         <div class="initial-screen hidden" id="quizScreen">
-            <h2>Câu hỏi về Duy Khoa</h2>
+            <h2>Thử thách 1: Câu hỏi về Duy Khoa</h2>
             <p class="question" id="quizQuestion"></p>
             <div class="options" id="quizOptions">
                 <!-- Các nút trả lời sẽ được thêm bằng JS -->
@@ -573,7 +573,7 @@
         <!-- Màn hình viết đoạn văn -->
         <div class="initial-screen hidden" id="essayScreen">
             <h2>Thử thách 2: Cảm nghĩ về Duy Khoa</h2>
-            <p>Hãy viết một đoạn văn ngắn (khoảng 50 chữ) về cảm nghĩ của bạn về Duy Khoa (nội dung của bạn sẽ được chuyển về hệ thống quản lí hộp thư của Duy Khoa mong bạn cứ thật lòng):</p>
+            <p>Hãy viết một đoạn văn ngắn (khoảng 50 chữ) về cảm nghĩ của bạn về Duy Khoa (nội dung của bạn sẽ được chuyển về hệ thống quản lí hộp thư của Duy Khoa hi vọng bạn không nói dối để lấy lòng Khoa hichic):</p>
             <textarea id="essayInput" rows="5" placeholder="Viết cảm nghĩ của bạn tại đây..."></textarea>
             <p id="wordCount">Số chữ: 0</p>
             <p id="essayMessage"></p>
@@ -584,7 +584,7 @@
         <div class="initial-screen hidden" id="readyToPlayScreen">
             <h2>Sắn sàng chưa?</h2>
             <p class="confirmation-details">Lưu ý: Game khó nhưng đạt ít nhất 10 là có quà</p>
-            <button class="start-button" id="proceedToCharacterSetupButton">Tiếp tục</button>
+            <button class="start-button" id="proceedToCharacterSetupButton">Tớ sẵn sãng rồi</button>
         </div>
 
         <!-- Màn hình Đặt tên & Chọn nhân vật -->
@@ -601,8 +601,6 @@
                     <button id="femaleButton" data-gender="female">Gái</button>
                 </div>
             </div>
-            <p>Nhấn phím SPACE hoặc nhấp chuột để bơi lên.</p>
-            <p>Vuốt lên trên điện thoại để bơi.</p>
             <button class="start-button" id="startGameButton" disabled>BẮT ĐẦU CHƠI</button>
         </div>
         
@@ -627,8 +625,8 @@
             <h2>Lá Thư Từ Duy Khoa</h2>
             <div class="letter-content">
                 <p>Gửi người chơi thân mến,</p>
-                <p>Duy Khoa xin chân thành chúc mừng bạn đã đạt được thành tích xuất sắc trong trò chơi này! Điểm số <span id="letterScore">0</span> của bạn đã chứng tỏ sự kiên trì và kỹ năng tuyệt vời.</p>
-                <p>Hy vọng bạn đã có những giây phút thư giãn và vui vẻ. Tiếp tục khám phá những điều thú vị khác nhé!</p>
+                <p>Duy Khoa xin chân thành chúc mừng bạn đã đạt được thành tích xuất sắc trong trò chơi này! Điểm số <span id="letterScore">0</span> chứng tỏ bạn rất thích game của Duy Khoa:3</p>
+                <p>Hy vọng bạn đã có những giây phút thư giãn và vui vẻ. Tiếp tục chơi leo top nhóeee!</p>
                 <p>Trân trọng,</p>
                 <p>Nguyễn Duy Khoa</p>
             </div>
@@ -694,9 +692,9 @@
         let correctAnswersCount = 0;
         const quizQuestions = [
             {
-                question: "Duy Khoa thích màu nào nhất?",
-                options: ["Xanh dương", "Đỏ", "Vàng", "Xanh lá"],
-                answer: "Xanh dương"
+                question: "Biệt danh của Duy Khoa là gì?",
+                options: ["Cậu Hai Khoa", "Cậu Ba Khoa", "Cậu Tư Khoa", "Hổng có Biệt danh"],
+                answer: "Cậu Ba Khoa"
             },
             {
                 question: "Món ăn yêu thích của Duy Khoa là gì?",
@@ -705,13 +703,13 @@
             },
             {
                 question: "Sở thích cuối tuần của Duy Khoa là gì?",
-                options: ["Chơi game", "Đọc sách", "Đi du lịch", "Ngủ"],
-                answer: "Đi du lịch"
+                options: ["Chơi game", "Xem tiktok", "Đi BHX", "Nghe nhạc"],
+                answer: "Nghe nhạc"
             },
             {
                 question: "Con vật yêu thích của Duy Khoa?",
-                options: ["Chó", "Mèo", "Cá", "Chim"],
-                answer: "Cá"
+                options: ["Chó", "Mèo", "Cún", "Chim"],
+                answer: "Cún"
             },
             {
                 question: "Duy Khoa sinh vào mùa nào?",
