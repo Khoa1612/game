@@ -389,6 +389,42 @@
             opacity: 1;
         }
 
+        /* Message Box styles */
+        .message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(44, 94, 125, 0.95); /* Darker blue, semi-transparent */
+            color: white;
+            padding: 25px 35px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            z-index: 201; /* Above door transition */
+            text-align: center;
+            max-width: 80%;
+            font-size: 1.1rem;
+            border: 2px solid #a7d3ee;
+        }
+        .message-box p {
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .message-box button {
+            background-color: #FFD700; /* Gold color */
+            color: #333;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            font-weight: bold;
+        }
+        .message-box button:hover {
+            background-color: #e6c200;
+            transform: translateY(-2px);
+        }
 
         /* Điều chỉnh cho di động */
         @media (max-width: 768px) {
@@ -443,6 +479,14 @@
                 font-size: 1rem;
             }
             #readyToPlayScreen .confirmation-details {
+                font-size: 0.9rem;
+            }
+            .message-box {
+                font-size: 0.9rem;
+                padding: 20px 25px;
+            }
+            .message-box button {
+                padding: 8px 20px;
                 font-size: 0.9rem;
             }
         }
@@ -504,14 +548,12 @@
         <!-- Màn hình Sẵn sàng chơi! -->
         <div class="initial-screen hidden" id="readyToPlayScreen">
             <h2>Bạn đã sẵn sàng!</h2>
-            <p>Tên nhân vật: <span id="readyPlayerName"></span></p>
-            <p>Giới tính: <span id="readyPlayerGender"></span></p>
             <p class="confirmation-details">Bạn đã hoàn thành tất cả các thử thách!</p>
-            <button class="start-button" id="finalStartGameButton">BẮT ĐẦU CHƠI</button>
+            <button class="start-button" id="proceedToCharacterSetupButton">Tiếp tục</button>
         </div>
 
-        <!-- Màn hình khởi đầu game (sau khi mở khóa) -->
-        <div class="initial-screen hidden" id="startScreen">
+        <!-- Màn hình Đặt tên & Chọn nhân vật -->
+        <div class="initial-screen hidden" id="characterSelectionScreen">
             <h1>Flappy Diver Reverse</h1>
             <div class="input-group">
                 <label for="playerNameInput">Tên nhân vật của bạn:</label>
@@ -524,8 +566,9 @@
                     <button id="femaleButton" data-gender="female">Nữ</button>
                 </div>
             </div>
-            
-            <button class="start-button" id="continueToQuizButton" disabled>Tiếp tục</button> <!-- Đổi ID và ban đầu vô hiệu hóa -->
+            <p>Nhấn phím SPACE hoặc nhấp chuột để bơi lên.</p>
+            <p>Vuốt lên trên điện thoại để bơi.</p>
+            <button class="start-button" id="startGameButton" disabled>BẮT ĐẦU CHƠI</button>
         </div>
         
         <!-- Màn hình game over -->
@@ -542,12 +585,34 @@
             <div class="door-right"></div>
             <div class="center-light"></div>
         </div>
+
+        <!-- Custom Message Box -->
+        <div id="messageBox" class="message-box hidden">
+            <p id="messageText"></p>
+            <button id="messageCloseButton">Đóng</button>
+        </div>
     </div>
 
     <script>
         // Lấy các phần tử DOM
         const gameCanvas = document.getElementById('gameCanvas');
         const ctx = gameCanvas.getContext('2d');
+
+        // Custom Message Box elements
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const messageCloseButton = document.getElementById('messageCloseButton');
+
+        // Function to show custom message box instead of alert
+        function showMessageBox(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+
+        // Close button for message box
+        messageCloseButton.onclick = () => {
+            messageBox.classList.add('hidden');
+        };
 
         // Màn hình khóa
         const lockScreen = document.getElementById('lockScreen');
@@ -601,18 +666,16 @@
         const wordCountDisplay = document.getElementById('wordCount');
         const essayMessage = document.getElementById('essayMessage');
         const submitEssayButton = document.getElementById('submitEssayButton');
-        const MIN_WORD_COUNT = 50; // Đã thay đổi thành 50
-        const MAX_WORD_COUNT = 9999; // Đã nới rộng giới hạn trên rất nhiều
+        const MIN_WORD_COUNT = 50; 
+        const MAX_WORD_COUNT = 9999; // Không giới hạn trên để cho phép viết nhiều hơn 50 từ
 
         // Màn hình Sẵn sàng chơi!
         const readyToPlayScreen = document.getElementById('readyToPlayScreen');
-        const readyPlayerName = document.getElementById('readyPlayerName');
-        const readyPlayerGender = document.getElementById('readyPlayerGender');
-        const finalStartGameButton = document.getElementById('finalStartGameButton');
+        const proceedToCharacterSetupButton = document.getElementById('proceedToCharacterSetupButton'); 
 
-        // Màn hình khởi đầu game (đặt tên, chọn nhân vật)
-        const startScreen = document.getElementById('startScreen');
-        const continueToQuizButton = document.getElementById('continueToQuizButton');
+        // Màn hình Đặt tên & Chọn nhân vật (trước đây là startScreen)
+        const characterSelectionScreen = document.getElementById('characterSelectionScreen');
+        const startGameButton = document.getElementById('startGameButton'); 
         const playerNameInput = document.getElementById('playerNameInput');
         const maleButton = document.getElementById('maleButton');
         const femaleButton = document.getElementById('femaleButton');
@@ -632,7 +695,8 @@
         const centerLight = document.querySelector('.center-light');
 
         // Các biến game
-        let gameStarted = false;
+        let gameStarted = false; // Flag for overall game session started (after challenges)
+        let gameActive = false; // Flag for active game mechanics (gravity, obstacles)
         let gameOver = false;
         let score = 0;
         let highScore = localStorage.getItem('flappyDiverHighScore') || 0;
@@ -685,10 +749,10 @@
         // === Màn hình khóa iOS ===
         function setupLockScreen() {
             lockScreen.classList.remove('hidden');
-            startScreen.classList.add('hidden');
             quizScreen.classList.add('hidden');
             essayScreen.classList.add('hidden');
-            readyToPlayScreen.classList.add('hidden'); // Ẩn màn hình sẵn sàng chơi
+            readyToPlayScreen.classList.add('hidden');
+            characterSelectionScreen.classList.add('hidden'); 
             gameOverScreen.classList.add('hidden');
             gameCanvas.style.display = 'none';
 
@@ -707,12 +771,10 @@
                 keypadButtons.forEach(button => button.disabled = true);
                 return;
             } else {
-                // Reset failed attempts if lockout period has passed or not locked out
                 localStorage.setItem('failedPasscodeAttempts', '0');
                 localStorage.removeItem('lastFailedPasscodeTime');
-                keypadButtons.forEach(button => button.disabled = false); // Re-enable keypad
+                keypadButtons.forEach(button => button.disabled = false);
             }
-
 
             keypadButtons.forEach(button => {
                 button.onclick = () => {
@@ -728,14 +790,13 @@
                     updatePasscodeDots();
                     if (currentPasscode.length === 4) {
                         if (currentPasscode === CORRECT_PASSCODE) {
-                            localStorage.setItem('failedPasscodeAttempts', '0'); // Reset attempts on success
+                            localStorage.setItem('failedPasscodeAttempts', '0');
                             localStorage.removeItem('lastFailedPasscodeTime');
                             performDoorTransition(() => {
                                 lockScreen.classList.add('hidden');
-                                setupStartScreen(); // Chuyển sang màn hình khởi đầu game
+                                setupQuizScreen(); // Chuyển sang màn hình Quiz
                             });
                         } else {
-                            // Mật khẩu sai
                             let currentAttempts = parseInt(localStorage.getItem('failedPasscodeAttempts') || '0');
                             currentAttempts++;
                             localStorage.setItem('failedPasscodeAttempts', currentAttempts.toString());
@@ -750,7 +811,7 @@
                             setTimeout(() => {
                                 currentPasscode = "";
                                 updatePasscodeDots();
-                            }, 500); // Reset dots after a brief delay
+                            }, 500);
                         }
                     }
                 };
@@ -767,10 +828,6 @@
             }
         }
 
-
-        // === Màn hình khởi đầu game (đặt tên, chọn nhân vật) ===
-        
-
         // === Màn hình Quiz ===
         function setupQuizScreen() {
             quizScreen.classList.remove('hidden');
@@ -778,22 +835,22 @@
             correctAnswersCount = 0;
             nextQuestionButton.classList.add('hidden');
             loadQuizQuestion();
-            gameCanvas.style.display = 'none'; // Đảm bảo canvas vẫn ẩn
+            gameCanvas.style.display = 'none'; 
+            characterSelectionScreen.classList.add('hidden'); 
         }
 
         function loadQuizQuestion() {
             if (currentQuizIndex >= quizQuestions.length) {
-                // Kết thúc Quiz
                 displayQuizResult();
                 return;
             }
 
-            quizResult.textContent = ""; // Xóa thông báo kết quả
-            nextQuestionButton.classList.add('hidden'); // Ẩn nút "Tiếp theo"
+            quizResult.textContent = "";
+            nextQuestionButton.classList.add('hidden');
 
             const q = quizQuestions[currentQuizIndex];
             quizQuestion.textContent = `${currentQuizIndex + 1}. ${q.question}`;
-            quizOptions.innerHTML = ""; // Xóa các lựa chọn cũ
+            quizOptions.innerHTML = "";
 
             q.options.forEach(option => {
                 const button = document.createElement('button');
@@ -805,13 +862,12 @@
         }
 
         function checkQuizAnswer(selectedOption, correctAnswer) {
-            // Vô hiệu hóa tất cả các nút tùy chọn sau khi chọn
             document.querySelectorAll('.quiz-option').forEach(button => {
                 button.disabled = true;
                 if (button.textContent === correctAnswer) {
-                    button.style.backgroundColor = '#4CAF50'; // Màu xanh lá cho đáp án đúng
+                    button.style.backgroundColor = '#4CAF50';
                 } else if (button.textContent === selectedOption) {
-                    button.style.backgroundColor = '#EF4444'; // Màu đỏ cho đáp án sai
+                    button.style.backgroundColor = '#EF4444';
                 }
             });
 
@@ -834,7 +890,7 @@
         function displayQuizResult() {
             let message = "";
             let passQuiz = false;
-            if (correctAnswersCount >= 4) { // Yêu cầu 4/5 câu đúng
+            if (correctAnswersCount >= 4) {
                 message = `Bạn đã trả lời đúng ${correctAnswersCount}/5 câu. Tuyệt vời! Bạn đã vượt qua bài kiểm tra.`;
                 quizResult.style.color = '#4CAF50';
                 passQuiz = true;
@@ -843,12 +899,11 @@
                 quizResult.style.color = '#EF4444';
                 passQuiz = false;
             }
-            quizQuestion.textContent = ""; // Xóa câu hỏi
-            quizOptions.innerHTML = ""; // Xóa lựa chọn
+            quizQuestion.textContent = "";
+            quizOptions.innerHTML = "";
             quizResult.textContent = message;
             nextQuestionButton.classList.add('hidden');
 
-            // Nút để tiếp tục hoặc chơi lại quiz
             const continueButton = document.createElement('button');
             continueButton.classList.add('quiz-button');
             if (passQuiz) {
@@ -862,10 +917,10 @@
             } else {
                 continueButton.textContent = "Thử lại Quiz";
                 continueButton.onclick = () => {
-                    setupQuizScreen(); // Thử lại Quiz
+                    setupQuizScreen();
                 };
             }
-            quizOptions.appendChild(continueButton); // Thêm vào phần options
+            quizOptions.appendChild(continueButton);
         }
 
         // === Màn hình viết đoạn văn ===
@@ -873,9 +928,10 @@
             essayScreen.classList.remove('hidden');
             essayInput.value = "";
             wordCountDisplay.textContent = "Số chữ: 0";
-            essayMessage.textContent = ""; // Xóa thông báo lỗi cũ
-            submitEssayButton.disabled = true; // Vô hiệu hóa nút gửi ban đầu
-            gameCanvas.style.display = 'none'; // Đảm bảo canvas vẫn ẩn
+            essayMessage.textContent = "";
+            submitEssayButton.disabled = true;
+            gameCanvas.style.display = 'none'; 
+            characterSelectionScreen.classList.add('hidden'); 
         }
 
         essayInput.oninput = () => {
@@ -883,9 +939,9 @@
             const words = text.split(/\s+/).filter(word => word.length > 0);
             const wordCount = words.length;
             wordCountDisplay.textContent = `Số chữ: ${wordCount}`;
-            essayMessage.textContent = ""; // Xóa thông báo khi người dùng đang nhập
+            essayMessage.textContent = "";
 
-            if (wordCount >= MIN_WORD_COUNT && wordCount <= MAX_WORD_COUNT) {
+            if (wordCount >= MIN_WORD_COUNT) { 
                 submitEssayButton.disabled = false;
                 wordCountDisplay.style.color = '#4CAF50';
             } else {
@@ -899,14 +955,13 @@
             const words = text.split(/\s+/).filter(word => word.length > 0);
             const wordCount = words.length;
 
-            if (wordCount >= MIN_WORD_COUNT && wordCount <= MAX_WORD_COUNT) {
+            if (wordCount >= MIN_WORD_COUNT) {
                 performDoorTransition(() => {
                     essayScreen.classList.add('hidden');
                     setupReadyToPlayScreen(); // Chuyển sang màn hình Sẵn sàng chơi!
                 });
             } else {
-                // Đã cập nhật thông báo lỗi để rõ ràng hơn
-                essayMessage.textContent = `Duy Khoa thân mến, đoạn văn phải có ít nhất ${MIN_WORD_COUNT} chữ. Bạn đang có ${wordCount} chữ.`;
+                essayMessage.textContent = `Duy Khoa thân mến, yêu cầu bạn nhập đủ ${MIN_WORD_COUNT} chữ thì mới tiếp tục. Bạn đang có ${wordCount} chữ.`;
                 essayMessage.style.color = '#EF4444';
             }
         };
@@ -914,16 +969,98 @@
         // === Màn hình Sẵn sàng chơi! ===
         function setupReadyToPlayScreen() {
             readyToPlayScreen.classList.remove('hidden');
-            readyPlayerName.textContent = playerName;
-            readyPlayerGender.textContent = playerGender === 'male' ? 'Nam' : 'Nữ';
-            gameCanvas.style.display = 'none'; // Đảm bảo canvas vẫn ẩn
+            gameCanvas.style.display = 'none'; 
+            characterSelectionScreen.classList.add('hidden'); 
 
-            finalStartGameButton.onclick = () => {
+            proceedToCharacterSetupButton.onclick = () => {
                 performDoorTransition(() => {
                     readyToPlayScreen.classList.add('hidden');
-                    startGame(); // Cuối cùng, bắt đầu game chính
+                    setupCharacterSelectionScreen(); // Chuyển sang màn hình Đặt tên & Chọn nhân vật
                 });
             };
+        }
+
+        // === Màn hình Đặt tên & Chọn nhân vật ===
+        function setupCharacterSelectionScreen() {
+            characterSelectionScreen.classList.remove('hidden');
+
+            // Không reset playerNameInput.value và playerGender ở đây nữa
+            // Chúng ta chỉ reset nếu đây là lần đầu tiên chơi (page refresh)
+            // hoặc nếu người dùng muốn thay đổi tên/giới tính
+
+            // If player name is already set, show it
+            if (playerName) {
+                playerNameInput.value = playerName;
+                isNameEntered = true;
+            } else {
+                playerNameInput.value = "";
+                isNameEntered = false;
+            }
+            
+            // Set gender selection based on current playerGender
+            if (playerGender === 'male') {
+                maleButton.classList.add('selected');
+                femaleButton.classList.remove('selected');
+            } else {
+                femaleButton.classList.add('selected');
+                maleButton.classList.remove('selected');
+            }
+            isGenderSelected = true; // Gender is always selected by default (male) or from previous choice
+
+            checkCharacterSelectionInputs();
+
+            playerNameInput.oninput = () => {
+                isNameEntered = playerNameInput.value.trim().length > 0;
+                checkCharacterSelectionInputs();
+            };
+
+            maleButton.onclick = () => {
+                playerGender = 'male';
+                maleButton.classList.add('selected');
+                femaleButton.classList.remove('selected');
+                isGenderSelected = true;
+                checkCharacterSelectionInputs();
+            };
+
+            femaleButton.onclick = () => {
+                playerGender = 'female';
+                femaleButton.classList.add('selected');
+                maleButton.classList.remove('selected');
+                isGenderSelected = true;
+                checkCharacterSelectionInputs();
+            };
+
+            startGameButton.onclick = () => { 
+                if (!isNameEntered) {
+                    showMessageBox("Vui lòng nhập tên nhân vật của bạn!");
+                    return;
+                }
+                playerName = playerNameInput.value.trim(); // Capture player name
+
+                if (!isGenderSelected) {
+                    showMessageBox("Vui lòng chọn giới tính nhân vật!");
+                    return;
+                }
+
+                performDoorTransition(() => {
+                    characterSelectionScreen.classList.add('hidden');
+                    gameCanvas.style.display = 'block'; 
+                    resetGameCanvasState(); 
+                    gameStarted = true; 
+                    gameActive = false; 
+                    animationFrameId = requestAnimationFrame(update); 
+                });
+            };
+
+            gameCanvas.style.display = 'none';
+        }
+
+        function checkCharacterSelectionInputs() {
+            if (isNameEntered && isGenderSelected) {
+                startGameButton.disabled = false;
+            } else {
+                startGameButton.disabled = true;
+            }
         }
 
 
@@ -954,95 +1091,24 @@
 
         window.addEventListener('resize', resizeCanvas);
 
-        function setupStartScreen() {
-            startScreen.classList.remove('hidden');
-
-            // Reset trạng thái input
-            playerNameInput.value = "";
-            playerGender = "male"; // Reset về mặc định
-            maleButton.classList.add('selected');
-            femaleButton.classList.remove('selected');
-            isNameEntered = false;
-            isGenderSelected = true; // Mặc định male đã được chọn
-
-            // Vô hiệu hóa nút "Tiếp tục" cho đến khi cả tên và giới tính hợp lệ
-            checkStartScreenInputs();
-
-            // Event listeners để kiểm tra input
-            playerNameInput.oninput = () => {
-                isNameEntered = playerNameInput.value.trim().length > 0;
-                checkStartScreenInputs();
-            };
-
-            maleButton.onclick = () => {
-                playerGender = 'male';
-                maleButton.classList.add('selected');
-                femaleButton.classList.remove('selected');
-                isGenderSelected = true;
-                checkStartScreenInputs();
-                // Không cần drawPlayer ở đây vì màn hình này không hiển thị canvas game
-            };
-
-            femaleButton.onclick = () => {
-                playerGender = 'female';
-                femaleButton.classList.add('selected');
-                maleButton.classList.remove('selected');
-                isGenderSelected = true;
-                checkStartScreenInputs();
-                // Không cần drawPlayer ở đây vì màn hình này không hiển thị canvas game
-            };
-
-            continueToQuizButton.onclick = () => {
-                if (!isNameEntered) {
-                    alert("Vui lòng nhập tên nhân vật của bạn!");
-                    return;
-                }
-                playerName = playerNameInput.value.trim();
-
-                if (!isGenderSelected) {
-                    alert("Vui lòng chọn giới tính nhân vật!");
-                    return;
-                }
-
-                performDoorTransition(() => {
-                    startScreen.classList.add('hidden');
-                    setupQuizScreen(); // Chuyển sang màn hình Quiz
-                });
-            };
-
-            // Canvas không hiển thị trên màn hình này
-            gameCanvas.style.display = 'none';
-        }
-
-        function checkStartScreenInputs() {
-            if (isNameEntered && isGenderSelected) {
-                continueToQuizButton.disabled = false;
-            } else {
-                continueToQuizButton.disabled = true;
-            }
-        }
-
         function resetGameCanvasState() {
-            // Đặt nhân vật cao hơn so với đáy biển để tránh va chạm ngay lập tức
             playerX = CANVAS_WIDTH - 80 - PLAYER_WIDTH;
-            playerY = CANVAS_HEIGHT / 3; // <-- Đã thay đổi vị trí Y ban đầu
+            playerY = CANVAS_HEIGHT / 2 - PLAYER_HEIGHT / 2; // Vị trí khởi tạo an toàn ở giữa
             playerVelocityY = 0;
             obstacles = [];
             score = 0;
             gameOver = false;
-            lastObstacleTime = performance.now();
-            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT); // Clear canvas
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         }
 
         // Vẽ phong cảnh dưới nước
         function drawBackground() {
-            ctx.fillStyle = '#DED895'; // Màu cát
+            ctx.fillStyle = '#DED895'; 
             ctx.fillRect(0, CANVAS_HEIGHT - 40, CANVAS_WIDTH, 40);
-            ctx.strokeStyle = '#C4BC87'; // Màu cát đậm hơn cho viền
+            ctx.strokeStyle = '#C4BC87'; 
             ctx.lineWidth = 2;
             ctx.strokeRect(0, CANVAS_HEIGHT - 40, CANVAS_WIDTH, 40);
 
-            // Các hạt bong bóng
             for (let i = 0; i < 20; i++) {
                 const bubbleX = Math.random() * CANVAS_WIDTH;
                 const bubbleY = Math.random() * CANVAS_HEIGHT;
@@ -1064,20 +1130,16 @@
             const bodyWidth = PLAYER_WIDTH * 0.8;
             const bodyHeight = PLAYER_HEIGHT * 0.6;
 
-            // Save canvas state before potential transform
             ctx.save();
             ctx.translate(playerX + PLAYER_WIDTH / 2, playerY + PLAYER_HEIGHT / 2);
-            ctx.scale(-1, 1); // Flip horizontally for "reverse" look
+            ctx.scale(-1, 1); 
 
-            // Draw relative to new origin (0,0) which is now the center of the player
             const relativeX = -PLAYER_WIDTH / 2;
             const relativeY = -PLAYER_HEIGHT / 2;
 
-            // Body
             ctx.fillStyle = skinColor;
             ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2, relativeY + headRadius * 0.8, bodyWidth, bodyHeight);
 
-            // Swimsuit
             ctx.fillStyle = swimsuitColor;
             if (playerGender === 'male') {
                 ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2, relativeY + headRadius * 0.8 + bodyHeight * 0.6, bodyWidth, bodyHeight * 0.4);
@@ -1086,12 +1148,10 @@
                 ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2, relativeY + headRadius * 0.8, bodyWidth, bodyHeight * 0.15);
             }
 
-            // Head
             ctx.beginPath();
             ctx.arc(relativeX + PLAYER_WIDTH / 2, relativeY + headRadius, headRadius, 0, Math.PI * 2);
             ctx.fill();
 
-            // Hair
             ctx.fillStyle = hairColor;
             if (playerGender === 'male') {
                 ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 + 2, relativeY + headRadius * 0.2, bodyWidth - 4, headRadius * 0.6);
@@ -1101,22 +1161,18 @@
                 ctx.fill();
             }
 
-            // Legs
             ctx.fillStyle = skinColor;
             ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 + (bodyWidth * 0.2), relativeY + PLAYER_HEIGHT - 8, 4, 8);
             ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 + (bodyWidth * 0.8) - 4, relativeY + PLAYER_HEIGHT - 8, 4, 8);
 
-            // Arms
             ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 - 3, relativeY + headRadius * 0.8 + bodyHeight * 0.2, 5, bodyHeight * 0.5);
             ctx.fillRect(relativeX + (PLAYER_WIDTH - bodyWidth) / 2 + bodyWidth - 2, relativeY + headRadius * 0.8 + bodyHeight * 0.2, 5, bodyHeight * 0.5);
 
-            // Eye
             ctx.fillStyle = 'black';
             ctx.beginPath();
             ctx.arc(relativeX + PLAYER_WIDTH / 2 + 4, relativeY + headRadius * 0.8, 2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Restore canvas state
             ctx.restore();
         }
 
@@ -1166,7 +1222,7 @@
                     ctx.arc(obstacle.x + OBSTACLE_WIDTH / 2, obstacle.top - 10, 8, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.beginPath();
-                    ctx.arc(obstacle.x + OBULDER_WIDTH / 2, CANVAS_HEIGHT - obstacle.bottom - 30, 8, 0, Math.PI * 2);
+                    ctx.arc(obstacle.x + OBSTACLE_WIDTH / 2, CANVAS_HEIGHT - obstacle.bottom - 30, 8, 0, Math.PI * 2);
                     ctx.fill();
                 }
             });
@@ -1202,57 +1258,85 @@
             ctx.fillText(playerName, 10, 10);
         }
 
+        // Vẽ hướng dẫn ban đầu trên canvas
+        function drawInitialReadyText() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT); // Clear canvas
+            drawBackground(); // Draw background and player
+            drawPlayer();
+            
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.font = 'bold 20px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.strokeText("NHẤN ĐỂ BƠI", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
+            ctx.fillText("NHẤN ĐỂ BƠI", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
+            ctx.font = 'bold 12px "Inter"';
+            ctx.strokeText("Hoặc Vuốt Lên", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 10);
+            ctx.fillText("Hoặc Vuốt Lên", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 10);
+        }
+
         // Vòng lặp cập nhật game chính
         function update(currentTime) {
-            if (gameOver || !gameStarted) return;
-
-            playerVelocityY += GRAVITY;
-            playerY += playerVelocityY;
-
-            if (playerY + PLAYER_HEIGHT >= CANVAS_HEIGHT - 40) {
-                playerY = CANVAS_HEIGHT - PLAYER_HEIGHT - 40;
-                endGame();
+            if (gameOver || !gameStarted) {
+                // Nếu game session đã bắt đầu nhưng cơ chế game chưa active
+                if (gameStarted && !gameActive) {
+                    drawInitialReadyText(); // Tiếp tục vẽ thông báo "NHẤN ĐỂ BƠI"
+                }
+                requestAnimationFrame(update); // Vẫn yêu cầu frame tiếp theo để cập nhật UI chờ
                 return;
             }
 
-            if (playerY < 0) {
-                playerY = 0;
-                playerVelocityY = 0;
-            }
+            if (gameActive) { // Chỉ áp dụng cơ chế game khi game active
+                playerVelocityY += GRAVITY;
+                playerY += playerVelocityY;
 
-            if (currentTime - lastObstacleTime > obstacleSpawnInterval) {
-                createObstacle();
-                lastObstacleTime = currentTime;
-            }
-
-            obstacles.forEach(obstacle => {
-                obstacle.x += OBSTACLE_SPEED;
-
-                if (
-                    playerX < obstacle.x + OBSTACLE_WIDTH &&
-                    playerX + PLAYER_WIDTH > obstacle.x &&
-                    (playerY < obstacle.top || playerY + PLAYER_HEIGHT > CANVAS_HEIGHT - obstacle.bottom - 40)
-                ) {
+                if (playerY + PLAYER_HEIGHT >= CANVAS_HEIGHT - 40) {
+                    playerY = CANVAS_HEIGHT - PLAYER_HEIGHT - 40;
                     endGame();
                     return;
                 }
 
-                if (obstacle.x + OBSTACLE_WIDTH > playerX && !obstacle.passed) {
-                    if (obstacle.x > playerX + PLAYER_WIDTH) {
-                        score++;
-                        obstacle.passed = true;
-                    }
+                if (playerY < 0) {
+                    playerY = 0;
+                    playerVelocityY = 0;
                 }
-            });
 
-            obstacles = obstacles.filter(obstacle => obstacle.x < CANVAS_WIDTH);
+                if (currentTime - lastObstacleTime > obstacleSpawnInterval) {
+                    createObstacle();
+                    lastObstacleTime = currentTime;
+                }
 
-            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            drawBackground();
-            drawObstacles();
-            drawPlayer();
-            drawScore();
-            drawPlayerName();
+                obstacles.forEach(obstacle => {
+                    obstacle.x += OBSTACLE_SPEED;
+
+                    if (
+                        playerX < obstacle.x + OBSTACLE_WIDTH &&
+                        playerX + PLAYER_WIDTH > obstacle.x &&
+                        (playerY < obstacle.top || playerY + PLAYER_HEIGHT > CANVAS_HEIGHT - obstacle.bottom - 40)
+                    ) {
+                        endGame();
+                        return;
+                    }
+
+                    if (obstacle.x + OBSTACLE_WIDTH > playerX && !obstacle.passed) {
+                        if (obstacle.x > playerX + PLAYER_WIDTH) { 
+                            score++;
+                            obstacle.passed = true;
+                        }
+                    }
+                });
+
+                obstacles = obstacles.filter(obstacle => obstacle.x < CANVAS_WIDTH);
+
+                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                drawBackground();
+                drawObstacles();
+                drawPlayer();
+                drawScore();
+                drawPlayerName();
+            } 
 
             animationFrameId = requestAnimationFrame(update);
         }
@@ -1272,16 +1356,15 @@
             gameOverScreen.classList.remove('hidden');
         }
 
-        // Bắt đầu game chính
-        function startGame() {
-            gameCanvas.style.display = 'block'; // Hiển thị canvas
-            resetGameCanvasState(); // Đảm bảo reset trạng thái game trước khi bắt đầu
-            gameStarted = true;
-            animationFrameId = requestAnimationFrame(update);
-        }
-
+        // Kích hoạt cú bơi của nhân vật (và bắt đầu game mechanics nếu đây là cú bơi đầu tiên)
         function playerSwimUp() {
-            if (!gameStarted || gameOver) return;
+            if (gameOver) return; // Không thể bơi nếu game over
+            if (!gameStarted) return; // Không thể bơi nếu game session chưa bắt đầu
+
+            if (!gameActive) { // Nếu game chưa active, đây là cú bơi đầu tiên
+                gameActive = true; // Kích hoạt cơ chế game
+                lastObstacleTime = performance.now(); // Bắt đầu đếm thời gian tạo chướng ngại vật
+            }
             playerVelocityY = JUMP_VELOCITY;
         }
 
@@ -1306,7 +1389,7 @@
             const touchEndY = e.changedTouches[0].clientY;
             const dy = touchEndY - touchStartY;
 
-            if (dy < -20) {
+            if (dy < -20) { // Vuốt lên
                 playerSwimUp();
             }
         });
@@ -1314,14 +1397,18 @@
         // Nút chơi lại
         restartButton.addEventListener('click', () => {
             gameOverScreen.classList.add('hidden');
-            setupLockScreen(); // Quay lại màn hình khóa
+            // Bắt đầu game ngay lập tức mà không cần qua màn hình chọn nhân vật
+            gameCanvas.style.display = 'block'; 
+            resetGameCanvasState(); 
+            gameStarted = true; 
+            gameActive = false; // Vẫn chờ người dùng nhấn để bơi
+            animationFrameId = requestAnimationFrame(update);
         });
 
         // --- Khởi tạo game ban đầu ---
-        // Bắt đầu từ màn hình khóa khi tải trang
         document.addEventListener('DOMContentLoaded', () => {
-            resizeCanvas(); // Đảm bảo canvas có kích thước đúng
-            setupLockScreen();
+            resizeCanvas();
+            setupLockScreen(); // Luôn bắt đầu từ màn hình khóa cho một phiên mới
         });
     </script>
 </body>
